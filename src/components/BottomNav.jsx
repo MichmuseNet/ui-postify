@@ -3,13 +3,16 @@ import { MdOutlineVideoLibrary } from "react-icons/md";
 import { TiMessages } from "react-icons/ti";
 import { FaSearch, FaUser } from "react-icons/fa";
 import { Link } from "react-router";
+import { getCurrentUserId } from "../config";
+
+const currentUserId = getCurrentUserId();
 
 const navItems = [
   { icon: HiHome, label: "Inicio", path: "/home" },
   { icon: MdOutlineVideoLibrary, label: "Reels", path: "#" },
   { icon: TiMessages, label: "Mensajes", path: "#" },
   { icon: FaSearch, label: "Buscar", path: "#" },
-  { icon: FaUser, label: "Perfil", path: "/profile/andrea" },
+  { icon: FaUser, label: "Perfil", path: currentUserId ? `/profile/${currentUserId}` : "/home" },
 ];
 
 const BottomNav = () => (

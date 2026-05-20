@@ -1,4 +1,5 @@
 import { useParams } from "react-router";
+import { useState } from "react";
 import useFetch from "../hooks/useFetch";
 import { API_BASE_URL } from "../config";
 import PostCard from "../components/PostCard";
@@ -18,6 +19,63 @@ const Profile = () => {
     ? `${user.name} ${user.lastname}`.trim()
     : "Perfil";
 
+  const [files, setFiles] = useState([]);
+  const [uploading, setUploading] = useState(false);
+
+  const handleFileChange = (e) => {
+    setFiles(Array.from(e.target.files || []));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!files.length) return;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      files.forEach((f) => formData.append("files", f));
+
+      const res = await fetch(`${API_BASE_URL}/users/${userId}/upload`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error(res.statusText || res.status);
+      // opcional: refrescar datos o mostrar mensaje
+      setFiles([]);
+      // puedes forzar recarga de los posts/user si el backend devuelve cambios
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error("Upload error:", err);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleCreatePost = async (e) => {
+    e.preventDefault();
+    if (!files.length) return;
+    const formData = new FormData();
+    formData.append("description", "nuevo post!!!!!!");
+    formData.append("user_id", userId);
+    files.forEach((file) => {
+      formData.append("files", file);
+    });
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/posts`, {
+        method: "POST",
+        body: formData,
+      });
+
+      const post = await res.json();
+      console.log(post);
+      setFiles([]);
+      e.target.reset();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-rose-50 to-pink-50 pb-24">
       {/* Header con Gradient */}
@@ -36,6 +94,35 @@ const Profile = () => {
               <div className="h-4 w-24 rounded-lg bg-white/20"></div>
             </div>
           )}
+
+          {/* Formulario de subida (restaurado) */}
+          <form onSubmit={handleSubmit} className="mt-4">
+            <label className="mb-2 block text-sm font-medium text-white/90">Subir imágenes</label>
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={handleFileChange}
+              className="block w-full text-sm text-slate-700 file:mr-4 file:rounded-full file:border-0 file:bg-white/20 file:px-3 file:py-2 file:text-sm file:font-semibold"
+            />
+
+            {files.length > 0 && (
+              <div className="mt-3 text-sm text-white/90">
+                Archivos seleccionados: {files.map((f) => f.name).join(", ")}
+              </div>
+            )}
+
+            <div className="mt-3">
+              <button
+                type="submit"
+                disabled={uploading}
+                className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+              >
+                {uploading ? "Subiendo..." : "Enviar archivos"}
+              </button>
+            </div>
+          </form>
+        </div>
 
           {userError && (
             <div className="rounded-2xl bg-white/20 backdrop-blur px-4 py-3 border border-white/30">
@@ -82,7 +169,6 @@ const Profile = () => {
               )}
             </>
           )}
-        </div>
       </header>
 
       <main className="mx-auto max-w-lg px-4 py-10">
@@ -137,6 +223,6 @@ const Profile = () => {
       <BottomNav />
     </div>
   );
-};
 
+}
 export default Profile;
